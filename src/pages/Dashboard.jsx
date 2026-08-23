@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react'
+import './pages.css'
 
 const STATUS_OPTIONS = ['reported', 'verified', 'in_progress', 'resolved']
 
-const STATUS_COLORS = {
-  reported: '#c0392b',
-  verified: '#e67e22',
-  in_progress: '#2980b9',
-  resolved: '#27ae60',
+function MapIcon() {
+  return (
+    <svg className="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M9 4l-5 2v14l5-2 6 2 5-2V4l-5 2-6-2z" strokeLinejoin="round" />
+      <path d="M9 4v14M15 6v14" />
+    </svg>
+  )
+}
+
+function SpinnerIcon() {
+  return (
+    <svg className="btn-icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 24, height: 24 }}>
+      <path d="M12 3a9 9 0 100 18" strokeLinecap="round" />
+    </svg>
+  )
 }
 
 async function fetchReports() {
@@ -38,9 +49,7 @@ function Dashboard() {
   }, [])
 
   async function handleStatusChange(id, newStatus) {
-    setReports((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
-    )
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)))
     await updateReportStatus(id, newStatus)
   }
 
@@ -48,83 +57,128 @@ function Dashboard() {
     .filter((r) => filterStatus === 'all' || r.status === filterStatus)
     .sort((a, b) => b[sortBy] - a[sortBy])
 
-  if (loading) {
-    return (
-      <div style={{ padding: '1.5rem' }}>
-        <h1>Municipal Dashboard</h1>
-        <p>Loading reports…</p>
-      </div>
-    )
-  }
+  const severeCount = reports.filter((r) => r.severity === 'severe').length
+  const unresolvedCount = reports.filter((r) => r.status !== 'resolved').length
+  const avgPriority = reports.length
+    ? Math.round(reports.reduce((sum, r) => sum + r.priorityScore, 0) / reports.length)
+    : 0
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '1.5rem' }}>
-      <h1>Municipal Dashboard</h1>
-      <p>Priority-ranked road damage reports.</p>
+    <div className="page">
+      <div className="page-inner page-inner--wide">
+        <span className="page-eyebrow">Municipal Log</span>
+        <h1 className="page-title">
+          What needs <span className="page-title-accent">fixing first</span>
+        </h1>
+        <p className="page-subtitle">
+          Every report below has been scored by an AI model and cross-checked against the road it's
+          on — so the worst damage on the busiest roads rises to the top.
+        </p>
 
-      <div style={{ display: 'flex', gap: '1rem', margin: '1rem 0' }}>
-        <label>
-          Sort by:{' '}
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="priorityScore">Priority</option>
-            <option value="severityScore">Severity</option>
-            <option value="reportedCount">Reports count</option>
-          </select>
-        </label>
+        {loading ? (
+          <div className="card loading-state">
+            <SpinnerIcon />
+            Pulling in the latest reports…
+          </div>
+        ) : (
+          <>
+            <div className="stats-row">
+              <div className="stat-card">
+                <div className="stat-value stat-value--default">{reports.length}</div>
+                <div className="stat-label">Total Reports</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value stat-value--severe">{severeCount}</div>
+                <div className="stat-label">Severe</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value stat-value--accent">{unresolvedCount}</div>
+                <div className="stat-label">Awaiting Repair</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value stat-value--default">{avgPriority || '—'}</div>
+                <div className="stat-label">Avg. Priority</div>
+              </div>
+            </div>
 
-        <label>
-          Status:{' '}
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s.replace('_', ' ')}</option>
-            ))}
-          </select>
-        </label>
-      </div>
+            <div className="controls-row">
+              <div className="control-group">
+                <span>Sort by</span>
+                <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                  <option value="priorityScore">Priority</option>
+                  <option value="severityScore">Severity</option>
+                  <option value="reportedCount">Reports count</option>
+                </select>
+              </div>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ textAlign: 'left', borderBottom: '2px solid #444' }}>
-            <th style={{ padding: '0.5rem' }}>Photo</th>
-            <th style={{ padding: '0.5rem' }}>Priority</th>
-            <th style={{ padding: '0.5rem' }}>Severity</th>
-            <th style={{ padding: '0.5rem' }}>Road type</th>
-            <th style={{ padding: '0.5rem' }}>Reports</th>
-            <th style={{ padding: '0.5rem' }}>Location</th>
-            <th style={{ padding: '0.5rem' }}>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleReports.map((r) => (
-            <tr key={r.id} style={{ borderBottom: '1px solid #333' }}>
-              <td style={{ padding: '0.5rem' }}>
-                <img src={r.imageUrl} alt="Pothole" style={{ width: 80, borderRadius: 4 }} />
-              </td>
-              <td style={{ padding: '0.5rem', fontWeight: 'bold' }}>{r.priorityScore}</td>
-              <td style={{ padding: '0.5rem', textTransform: 'capitalize' }}>{r.severity}</td>
-              <td style={{ padding: '0.5rem', textTransform: 'capitalize' }}>{r.roadType}</td>
-              <td style={{ padding: '0.5rem' }}>{r.reportedCount}</td>
-              <td style={{ padding: '0.5rem', fontSize: '0.8rem' }}>
-                {r.lat.toFixed(3)}, {r.lng.toFixed(3)}
-              </td>
-              <td style={{ padding: '0.5rem' }}>
-                <select
-                  value={r.status}
-                  onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                  style={{ color: STATUS_COLORS[r.status], fontWeight: 'bold' }}
-                >
+              <div className="control-group">
+                <span>Status</span>
+                <select className="select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <option value="all">All</option>
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>{s.replace('_', ' ')}</option>
                   ))}
                 </select>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
 
-      {visibleReports.length === 0 && <p>No reports match this filter.</p>}
+            <div className="table-wrap">
+              {visibleReports.length === 0 ? (
+                <div className="empty-state">
+                  <MapIcon />
+                  <div className="empty-state-title">Nothing here yet</div>
+                  <p className="empty-state-text">
+                    {reports.length === 0
+                      ? "Once citizens start submitting reports, they'll show up here — ranked by urgency automatically."
+                      : "No reports match this filter. Try a different status."}
+                  </p>
+                </div>
+              ) : (
+                <table className="reports-table">
+                  <thead>
+                    <tr>
+                      <th>Photo</th>
+                      <th>Priority</th>
+                      <th>Severity</th>
+                      <th>Road type</th>
+                      <th>Reports</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleReports.map((r) => (
+                      <tr key={r.id}>
+                        <td><img src={r.imageUrl} alt="Pothole" className="thumb" /></td>
+                        <td>
+                          <span className={`priority-score priority-score--${r.severity}`}>
+                            {r.priorityScore}
+                          </span>
+                        </td>
+                        <td><span className={`badge badge-${r.severity}`}>{r.severity}</span></td>
+                        <td style={{ textTransform: 'capitalize' }}>{r.roadType}</td>
+                        <td>{r.reportedCount}</td>
+                        <td className="location-text">{r.lat.toFixed(3)}, {r.lng.toFixed(3)}</td>
+                        <td>
+                          <select
+                            className={`status-select status-${r.status}`}
+                            value={r.status}
+                            onChange={(e) => handleStatusChange(r.id, e.target.value)}
+                          >
+                            {STATUS_OPTIONS.map((s) => (
+                              <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

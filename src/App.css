@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+
 * {
   box-sizing: border-box;
 }
@@ -9,9 +11,9 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #0b1220;
-  color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f2efe6;
+  color: #1c1c1c;
+  font-family: 'IBM Plex Sans', Arial, Helvetica, sans-serif;
 }
 
 button {
@@ -20,10 +22,11 @@ button {
 
 .app {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.15), transparent 25%),
-    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.1), transparent 25%),
-    #0b1220;
+  background: #f2efe6;
+  background-image:
+    linear-gradient(rgba(28, 28, 28, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 28, 28, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 /* NAVBAR */
@@ -35,49 +38,67 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(11, 18, 32, 0.9);
+  border-bottom: 3px solid #1c1c1c;
+  background: #f2efe6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: 'Oswald', sans-serif;
   font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #1c1c1c;
+  text-transform: uppercase;
 }
 
 .logo-icon {
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 30px;
 }
 
 .nav-links a {
-  color: #aab7c8;
+  color: #4b4b4b;
   text-decoration: none;
-  font-size: 15px;
-  transition: 0.2s;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: 0.15s;
 }
 
 .nav-links a:hover {
-  color: #ffffff;
+  color: #1c1c1c;
 }
 
 .nav-button {
-  border: none;
-  background: #2563eb;
-  color: white;
-  padding: 11px 18px;
-  border-radius: 8px;
+  border: 2px solid #1c1c1c;
+  background: #f2b705;
+  color: #1c1c1c;
+  padding: 10px 20px;
+  border-radius: 2px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 3px 3px 0 #1c1c1c;
+}
+
+.nav-button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #1c1c1c;
 }
 
 /* HERO */
@@ -99,32 +120,43 @@ button {
 }
 
 .badge {
-  display: inline-block;
-  padding: 8px 14px;
-  margin-bottom: 22px;
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  border-radius: 50px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #60a5fa;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  margin-bottom: 26px;
+  border: 2px dashed #1c1c1c;
+  border-radius: 2px;
+  background: transparent;
+  color: #1c1c1c;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transform: rotate(-1.5deg);
 }
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(48px, 6vw, 80px);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: clamp(44px, 6vw, 74px);
   line-height: 1.05;
-  letter-spacing: -2px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #1c1c1c;
 }
 
 .hero h1 span {
-  color: #3b82f6;
+  color: #b91c1c;
 }
 
 .hero-content p {
   max-width: 620px;
   margin: 25px 0 35px;
-  color: #aab7c8;
-  font-size: 18px;
+  color: #4b4b4b;
+  font-size: 17px;
   line-height: 1.7;
 }
 
@@ -136,28 +168,37 @@ button {
 
 .primary-button,
 .secondary-button {
-  padding: 15px 22px;
-  border-radius: 9px;
+  padding: 15px 24px;
+  border-radius: 2px;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 2px solid #1c1c1c;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .primary-button {
-  border: none;
-  background: #2563eb;
-  color: #ffffff;
+  background: #f2b705;
+  color: #1c1c1c;
+  box-shadow: 4px 4px 0 #1c1c1c;
 }
 
-.primary-button:hover,
-.nav-button:hover {
-  background: #1d4ed8;
+.primary-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #1c1c1c;
 }
 
 .secondary-button {
-  background: transparent;
-  border: 1px solid #334155;
-  color: #ffffff;
+  background: #f2efe6;
+  color: #1c1c1c;
+  box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.35);
+}
+
+.secondary-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(28, 28, 28, 0.35);
 }
 
 /* AI CARD */
@@ -167,21 +208,25 @@ button {
 }
 
 .ai-card {
-  padding: 24px;
-  border: 1px solid #26354d;
-  border-radius: 18px;
-  background: linear-gradient(145deg, #111c2e, #0d1626);
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+  padding: 22px;
+  border: 3px solid #1c1c1c;
+  border-radius: 2px;
+  background: #fffdf8;
+  box-shadow: 8px 8px 0 rgba(28, 28, 28, 0.9);
 }
 
 .ai-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #d7e2f0;
-  font-size: 13px;
+  color: #1c1c1c;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-bottom: 12px;
+  border-bottom: 2px dashed rgba(28, 28, 28, 0.25);
 }
 
 .live-dot {
@@ -189,65 +234,76 @@ button {
   height: 8px;
   margin-left: auto;
   border-radius: 50%;
-  background: #22c55e;
+  background: #15803d;
 }
 
 .road-image-placeholder {
   height: 170px;
-  margin: 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 70px;
-  border-radius: 12px;
-  background:
-    linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-  border: 1px solid #334155;
+  margin: 16px 0;
+  border-radius: 2px;
+  border: 2px solid #1c1c1c;
+  overflow: hidden;
+  position: relative;
+}
+
+.road-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .analysis-row {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0;
-  color: #94a3b8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 11px 0;
+  color: #6b6b6b;
+  border-bottom: 1px solid rgba(28, 28, 28, 0.1);
   font-size: 14px;
+  font-family: 'IBM Plex Mono', monospace;
 }
 
 .analysis-row strong {
-  color: #ffffff;
+  color: #1c1c1c;
 }
 
 .analysis-row .high {
-  color: #f97316;
+  color: #b91c1c;
 }
 
 .priority-box {
-  margin-top: 20px;
-  padding: 16px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 2px;
+  background: #fdf2f2;
+  border: 2px solid #b91c1c;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 6px;
+  position: relative;
 }
 
 .priority-box span:first-child {
-  color: #94a3b8;
+  color: #b91c1c;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .priority-box strong {
-  color: #ffffff;
-  font-size: 20px;
+  color: #1c1c1c;
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px;
 }
 
 .priority-box .critical {
   grid-column: 1 / -1;
-  color: #ef4444;
-  font-size: 12px;
+  color: #b91c1c;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 /* STATS */
@@ -257,16 +313,16 @@ button {
   margin: 0 auto 100px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border: 1px solid #26354d;
-  border-radius: 16px;
+  border: 3px solid #1c1c1c;
+  border-radius: 2px;
   overflow: hidden;
-  background: rgba(17, 28, 46, 0.65);
+  background: #fffdf8;
 }
 
 .stat-card {
-  padding: 30px;
+  padding: 28px;
   text-align: center;
-  border-right: 1px solid #26354d;
+  border-right: 2px solid #1c1c1c;
 }
 
 .stat-card:last-child {
@@ -274,22 +330,29 @@ button {
 }
 
 .stat-card h2 {
-  margin: 0 0 8px;
-  color: #60a5fa;
+  margin: 0 0 6px;
+  font-family: 'Oswald', sans-serif;
+  color: #1c1c1c;
   font-size: 32px;
+  font-weight: 700;
 }
 
 .stat-card p {
   margin: 0;
-  color: #94a3b8;
-  font-size: 14px;
+  color: #6b6b6b;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 /* HOW IT WORKS */
 
 .how-it-works {
   padding: 90px 8%;
-  background: #0e1726;
+  background: #fffdf8;
+  border-top: 3px solid #1c1c1c;
+  border-bottom: 3px solid #1c1c1c;
 }
 
 .section-heading {
@@ -299,20 +362,25 @@ button {
 }
 
 .section-heading > span {
-  color: #3b82f6;
-  font-size: 13px;
+  color: #b91c1c;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 0.1em;
 }
 
 .section-heading h2 {
-  margin: 15px 0;
-  font-size: 42px;
+  margin: 12px 0;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 40px;
+  color: #1c1c1c;
 }
 
 .section-heading p {
   margin: 0;
-  color: #94a3b8;
+  color: #6b6b6b;
   line-height: 1.6;
 }
 
@@ -326,34 +394,49 @@ button {
 
 .step-card {
   position: relative;
-  padding: 30px 25px;
-  border: 1px solid #26354d;
-  border-radius: 14px;
-  background: #111c2e;
+  padding: 28px 22px;
+  border: 2px solid #1c1c1c;
+  border-radius: 2px;
+  background: #f2efe6;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.step-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 #1c1c1c;
 }
 
 .step-number {
   position: absolute;
-  top: 18px;
-  right: 20px;
-  color: #334155;
-  font-size: 14px;
+  top: -14px;
+  right: 16px;
+  background: #f2b705;
+  border: 2px solid #1c1c1c;
+  color: #1c1c1c;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
   font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 2px;
 }
 
 .step-icon {
-  margin-bottom: 20px;
-  font-size: 34px;
+  margin-bottom: 18px;
+  font-size: 30px;
 }
 
 .step-card h3 {
-  margin: 0 0 12px;
-  font-size: 20px;
+  margin: 0 0 10px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 17px;
+  color: #1c1c1c;
 }
 
 .step-card p {
   margin: 0;
-  color: #94a3b8;
+  color: #6b6b6b;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -395,7 +478,7 @@ button {
   }
 
   .hero h1 {
-    font-size: 48px;
+    font-size: 42px;
   }
 
   .hero-content p {
@@ -409,7 +492,7 @@ button {
 
   .stat-card {
     border-right: none;
-    border-bottom: 1px solid #26354d;
+    border-bottom: 2px solid #1c1c1c;
   }
 
   .stat-card:last-child {
