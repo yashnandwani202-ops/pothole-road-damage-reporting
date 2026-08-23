@@ -25,3 +25,4 @@ dist-ssr
 node_modules/
 backend/uploads/
 .env
+backend/db.js
