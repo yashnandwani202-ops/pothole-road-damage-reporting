@@ -55,11 +55,62 @@ async function detectSeverity(imageBuffer, filename) {
   const data = await res.json()
   return { severity: data.severity, severityScore: data.severityScore }
 }
-// TODO: replace with a real lookup against OpenStreetMap road classification
-// based on lat/lng, rather than a random pick.
-function mockRoadType() {
-  const types = ['residential', 'arterial', 'highway']
-  return types[Math.floor(Math.random() * types.length)]
+
+// --- Real road-type lookup via OpenStreetMap's Overpass API ---
+// Maps OSM's detailed 'highway' tag values into our 3 simplified categories.
+function mapHighwayTagToRoadType(highwayTag) {
+  const highwayMap = {
+    motorway: 'highway',
+    motorway_link: 'highway',
+    trunk: 'highway',
+    trunk_link: 'highway',
+    primary: 'arterial',
+    primary_link: 'arterial',
+    secondary: 'arterial',
+    secondary_link: 'arterial',
+    tertiary: 'arterial',
+    tertiary_link: 'arterial',
+    residential: 'residential',
+    living_street: 'residential',
+    unclassified: 'residential',
+    service: 'residential',
+  }
+  return highwayMap[highwayTag] || 'residential' // default fallback
+}
+
+async function lookupRoadType(lat, lng) {
+  // Search for any tagged road within 50 meters of the report's coordinates
+  const query = `[out:json][timeout:10];way(around:50,${lat},${lng})[highway];out tags 5;`
+  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
+
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('Overpass request failed')
+
+    const data = await res.json()
+    if (!data.elements || data.elements.length === 0) {
+      return 'residential' // no road found nearby, safe fallback
+    }
+
+    // Among nearby roads, prefer the most significant one found
+    // (e.g. if both a residential lane and a highway are within 50m, count the highway)
+    const priority = { highway: 3, arterial: 2, residential: 1 }
+    let best = 'residential'
+
+    for (const el of data.elements) {
+      const tag = el.tags && el.tags.highway
+      if (!tag) continue
+      const mapped = mapHighwayTagToRoadType(tag)
+      if (priority[mapped] > priority[best]) {
+        best = mapped
+      }
+    }
+
+    return best
+  } catch (err) {
+    console.error('Road type lookup failed, using fallback:', err.message)
+    return 'residential' // fail safe — never block report submission over this
+  }
 }
 
 function computePriorityScore(severityScore, roadType, reportedCount) {
@@ -84,7 +135,7 @@ app.post('/api/reports', upload.single('image'), async (req, res) => {
     const imageBuffer = fs.readFileSync(req.file.path)
 
     const { severity, severityScore } = await detectSeverity(imageBuffer, req.file.filename)
-    const roadType = mockRoadType() // TODO: replace with real OSM lookup later
+    const roadType = await lookupRoadType(parseFloat(lat), parseFloat(lng))
     const priorityScore = computePriorityScore(severityScore, roadType, 1)
 
     const newReport = {
