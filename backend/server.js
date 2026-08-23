@@ -3,6 +3,7 @@ const cors = require('cors')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
+const pool = require('./db')
 
 const app = express()
 const PORT = 5000
@@ -26,10 +27,6 @@ const storage = multer.diskStorage({
   },
 })
 const upload = multer({ storage })
-
-// In-memory store for now. Swap for a real database (MongoDB/Postgres) later.
-let reports = []
-let nextId = 1
 
 // --- Real severity detection via the Flask/YOLO service ---
 const FormDataNode = require('form-data')
@@ -57,7 +54,6 @@ async function detectSeverity(imageBuffer, filename) {
 }
 
 // --- Real road-type lookup via OpenStreetMap's Overpass API ---
-// Maps OSM's detailed 'highway' tag values into our 3 simplified categories.
 function mapHighwayTagToRoadType(highwayTag) {
   const highwayMap = {
     motorway: 'highway',
@@ -75,11 +71,10 @@ function mapHighwayTagToRoadType(highwayTag) {
     unclassified: 'residential',
     service: 'residential',
   }
-  return highwayMap[highwayTag] || 'residential' // default fallback
+  return highwayMap[highwayTag] || 'residential'
 }
 
 async function lookupRoadType(lat, lng) {
-  // Search for any tagged road within 50 meters of the report's coordinates
   const query = `[out:json][timeout:10];way(around:50,${lat},${lng})[highway];out tags 5;`
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
 
@@ -89,11 +84,9 @@ async function lookupRoadType(lat, lng) {
 
     const data = await res.json()
     if (!data.elements || data.elements.length === 0) {
-      return 'residential' // no road found nearby, safe fallback
+      return 'residential'
     }
 
-    // Among nearby roads, prefer the most significant one found
-    // (e.g. if both a residential lane and a highway are within 50m, count the highway)
     const priority = { highway: 3, arterial: 2, residential: 1 }
     let best = 'residential'
 
@@ -109,74 +102,99 @@ async function lookupRoadType(lat, lng) {
     return best
   } catch (err) {
     console.error('Road type lookup failed, using fallback:', err.message)
-    return 'residential' // fail safe — never block report submission over this
+    return 'residential'
   }
 }
 
 function computePriorityScore(severityScore, roadType, reportedCount) {
   const roadWeight = { residential: 0.6, arterial: 0.8, highway: 1.0 }[roadType] || 0.6
   const base = severityScore * 70 + roadWeight * 20
-  const duplicateBoost = Math.min(reportedCount * 2, 10) // more reports = slightly higher priority, capped
+  const duplicateBoost = Math.min(reportedCount * 2, 10)
   return Math.round(base + duplicateBoost)
+}
+
+// Convert a DB row (snake_case) into the shape the frontend expects (camelCase)
+function formatReport(row) {
+  return {
+    id: row.id,
+    imageUrl: row.image_url,
+    lat: row.lat,
+    lng: row.lng,
+    severity: row.severity,
+    severityScore: row.severity_score,
+    roadType: row.road_type,
+    priorityScore: row.priority_score,
+    reportedCount: row.reported_count,
+    status: row.status,
+    timestamp: row.created_at,
+  }
 }
 
 // --- Routes ---
 
 // POST /api/reports — citizen submits a new report
 app.post('/api/reports', upload.single('image'), async (req, res) => {
-  const { lat, lng, timestamp } = req.body
+  const { lat, lng } = req.body
 
   if (!req.file || !lat || !lng) {
     return res.status(400).json({ error: 'Image, lat, and lng are required.' })
   }
 
   try {
-    const fs = require('fs')
     const imageBuffer = fs.readFileSync(req.file.path)
 
     const { severity, severityScore } = await detectSeverity(imageBuffer, req.file.filename)
     const roadType = await lookupRoadType(parseFloat(lat), parseFloat(lng))
     const priorityScore = computePriorityScore(severityScore, roadType, 1)
+    const imageUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`
 
-    const newReport = {
-      id: nextId++,
-      imageUrl: `http://localhost:${PORT}/uploads/${req.file.filename}`,
-      lat: parseFloat(lat),
-      lng: parseFloat(lng),
-      severity,
-      severityScore: Math.round(severityScore * 100) / 100,
-      roadType,
-      priorityScore,
-      reportedCount: 1,
-      status: 'reported',
-      timestamp: timestamp || new Date().toISOString(),
-    }
+    const result = await pool.query(
+      `INSERT INTO reports
+        (image_url, location, lat, lng, severity, severity_score, road_type, priority_score, reported_count, status)
+       VALUES
+        ($1, ST_SetSRID(ST_MakePoint($3, $2), 4326)::geography, $2, $3, $4, $5, $6, $7, 1, 'reported')
+       RETURNING *`,
+      [imageUrl, parseFloat(lat), parseFloat(lng), severity, severityScore, roadType, priorityScore]
+    )
 
-    reports.push(newReport)
-    res.status(201).json(newReport)
+    res.status(201).json(formatReport(result.rows[0]))
   } catch (err) {
-    console.error('Detection failed:', err.message)
-    res.status(502).json({ error: 'Pothole detection service is unavailable. Make sure app.py is running on port 5001.' })
+    console.error('Report submission failed:', err.message)
+    res.status(502).json({ error: 'Something went wrong while processing the report. Check that the ML service and database are running.' })
   }
 })
 
 // GET /api/reports — municipal dashboard fetches all reports
-app.get('/api/reports', (req, res) => {
-  res.json(reports)
+app.get('/api/reports', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM reports ORDER BY priority_score DESC`)
+    res.json(result.rows.map(formatReport))
+  } catch (err) {
+    console.error('Failed to fetch reports:', err.message)
+    res.status(500).json({ error: 'Failed to fetch reports' })
+  }
 })
 
 // PATCH /api/reports/:id/status — update a report's status
-app.patch('/api/reports/:id/status', (req, res) => {
+app.patch('/api/reports/:id/status', async (req, res) => {
   const id = parseInt(req.params.id, 10)
   const { status } = req.body
 
-  const report = reports.find((r) => r.id === id)
-  if (!report) {
-    return res.status(404).json({ error: 'Report not found' })
-  }
+  try {
+    const result = await pool.query(
+      `UPDATE reports SET status = $1 WHERE id = $2 RETURNING *`,
+      [status, id]
+    )
 
-  report.status = status
-  res.json(report)
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Report not found' })
+    }
+
+    res.json(formatReport(result.rows[0]))
+  } catch (err) {
+    console.error('Failed to update status:', err.message)
+    res.status(500).json({ error: 'Failed to update status' })
+  }
 })
 
 app.listen(PORT, () => {
